@@ -1,0 +1,15 @@
+{
+  "name": "elk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@elastic/app-search-node": "^7.12.0",
+    "@elastic/elasticsearch": "^7.12.0"
+  }
+}
