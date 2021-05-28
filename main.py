@@ -9,6 +9,13 @@ app = Flask(__name__)
 cors = CORS(app)
 
 
+def insert_metadata(transcript, yt_id, wspace_id):
+    for doc in transcript:
+        doc['wspace_id'] = wspace_id
+        doc['yt_id'] = yt_id
+    return transcript
+
+
 @app.route('/', methods=['GET'])
 def check():
     return {
@@ -20,8 +27,12 @@ def check():
 def getcaptions():
     request_data = request.get_json()
     yt_id = request_data['yt_id']
+    wspace_id = request_data['wspace_id']
+
     try:
-        result = YouTubeTranscriptApi.get_transcript(yt_id, languages=['en'])
+        transcript_list = YouTubeTranscriptApi.list_transcripts(yt_id)
+        result = transcript_list.find_transcript(['en']).fetch()
+        result = insert_metadata(result, yt_id, wspace_id)
     except TooManyRequests:
         result = "TooManyRequests"
         print(result)
