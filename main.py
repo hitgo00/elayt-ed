@@ -9,9 +9,9 @@ app = Flask(__name__)
 cors = CORS(app)
 
 
-def insert_metadata(transcript, yt_id, wspace_id):
+def insert_metadata(transcript, yt_id, notion):
     for doc in transcript:
-        doc['wspace_id'] = wspace_id
+        doc['notion_url'] = notion
         doc['yt_id'] = yt_id
     return transcript
 
@@ -26,25 +26,31 @@ def check():
 @app.route('/getcaptions', methods=['POST'])
 def getcaptions():
     request_data = request.get_json()
-    yt_id = request_data['yt_id']
-    wspace_id = request_data['wspace_id']
+    yt_ids = request_data['yt_ids']
+    notion = str(request_data['notion'])
+    # print('printing: ', yt_id, notion)
 
-    try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(yt_id)
-        result = transcript_list.find_transcript(['en']).fetch()
-        result = insert_metadata(result, yt_id, wspace_id)
-    except TooManyRequests:
-        result = "TooManyRequests"
-        print(result)
-    except TranscriptsDisabled:
-        result = "TranscriptsDisabled"
-        print(result)
-    except CouldNotRetrieveTranscript:
-        result = "CouldNotRetrieveTranscript"
-        print(result)
+    result_list = []
+    for yt_id in yt_ids:
+        result = []
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(yt_id)
+            result = transcript_list.find_transcript(['en']).fetch()
+            result = insert_metadata(result, yt_id, notion)
+            for r in result:
+                result_list.append(r)
+        except TooManyRequests:
+            result = "TooManyRequests"
+            print(result)
+        except TranscriptsDisabled:
+            result = "TranscriptsDisabled"
+            print(result)
+        except CouldNotRetrieveTranscript:
+            result = "CouldNotRetrieveTranscript"
+            print(result)
 
     return {
-        'response': result
+        'response': result_list
     }
 
 

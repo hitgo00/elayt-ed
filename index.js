@@ -3,9 +3,9 @@ const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 require('dotenv').config();
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
-const DB_URL = process.env.DB_URL || '';
+// const DB_URL = process.env.DB_URL || '';
 const port = process.env.PORT || 8000;
 
 // mongoose
