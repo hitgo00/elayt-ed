@@ -1,7 +1,10 @@
 const router = require('express').Router();
 const axios = require('axios');
+const _ = require('lodash');
 const AppSearchClient = require('@elastic/app-search-node');
 require('dotenv').config();
+
+const DOCS_IN_SINGLE_ELASTIC_REQ = 50;
 
 const flask_url = process.env.FLASK_SERVER || '';
 const apiKey = process.env.ELASTIC_API_KEY || '';
@@ -45,54 +48,32 @@ router.get('/q/', (req, res) => {
 });
 
 // Index data to ES
-router.post('/index/', async (req, res) => {
+router.post('/index', async (req, res) => {
   const yt_ids = req.body.yt_ids;
   const notion_url = req.body.notion;
 
-  // const captions =
   await axios
     .post(`${flask_url}getcaptions`, {
       yt_ids: yt_ids,
       notion: notion_url,
     })
     .then((resp) => {
-      // console.log('From then block1: ', resp.data['response']);
-      // if (
-      //   resp.data['response'] == 'TranscriptsDisabled' ||
-      //   resp.data['response'] == 'TooManyRequests' ||
-      //   resp.data['response'] == 'CouldNotRetrieveTranscript'
-      // ) {
-      //   return res.status(400).json({ err: resp.data['response'] });
-      // }
-
-      client
-        .indexDocuments(engineName, resp.data['response'])
-        .then((response) => {
-          console.log(response);
-          return res
-            .status(201)
-            .json({ message: 'Index Created Successfully' });
-        })
-        .catch((error) => {
-          console.log(error);
-          return res.status(400).json({ err: e });
-        });
+      const responseDocs = resp.data['response'];
+      _.chunk(responseDocs, DOCS_IN_SINGLE_ELASTIC_REQ).forEach((chunk) => {
+        client
+          .indexDocuments(engineName, chunk)
+          .then((response) => {
+            console.log(response);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      });
     })
     .catch((e) => {
-      console.log('Error while requesting captions');
+      console.log('Error while requesting captions ', e);
       return res.status(400).json({ err: e });
     });
-
-  // try {
-  //   res.status(201).json({
-  //     message: 'Index created successfully',
-  //   });
-  // } catch (err) {
-  //   res.status(400).json({
-  //     message: 'Error! Index not created',
-  //     err: err.message,
-  //   });
-  // }
 });
 
 module.exports = router;
